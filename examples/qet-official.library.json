@@ -1,0 +1,20 @@
+{
+  "library": "qet-official",
+  "sourceLanguage": "fr",
+  "initialVersion": "1.0.0",
+  "channel": "stable",
+  "expiresDays": 7,
+  "usage": {
+    "licence": "CC-BY-3.0",
+    "train-ai": "n",
+    "ai-use": "y",
+    "search": "y"
+  },
+  "suppress": [
+    {
+      "path": "10_electric/20_manufacturers_articles/endress_hauser/endress+hauser-débimétre-promag-50.elmt",
+      "rule": "duplicate-uuid",
+      "reason": "Byte-identical copy of endress+hauser-debimetre-promag-50.elmt under an accented file name (upstream qelectrotech-elements at b88197c). Excluded until the duplicate is removed upstream."
+    }
+  ]
+}
