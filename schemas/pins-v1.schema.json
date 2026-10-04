@@ -1,0 +1,71 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qet-protocol:schema:pins:1",
+  "title": "Project pin list, version 1",
+  "description": "Lockfile recording what each embedded element copy came from (part D §5). The client verifies a pinned element against the hash HERE, never against a hash a channel or server supplies (S3). Departure from the part D example: a pin names the library (namespace), not a feed URL. The client maps a namespace to the sources it has configured; a pin that named a URL would be a field naming a resource to fetch (S1) and would let a project file pick its own source (S5). SPDX-License-Identifier: Apache-2.0.",
+  "type": "object",
+  "required": ["pins", "elements"],
+  "additionalProperties": false,
+  "properties": {
+    "pins": { "const": 1 },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/pin" }
+    }
+  },
+  "$defs": {
+    "pin": {
+      "type": "object",
+      "required": ["uuid", "library", "path", "version", "hash", "policy", "state"],
+      "additionalProperties": false,
+      "properties": {
+        "uuid": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/uuid" },
+        "library": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/libraryId" },
+        "path": { "type": "string", "maxLength": 1024 },
+        "version": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/version" },
+        "hash": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/hash" },
+        "policy": {
+          "description": "notify: offer updates for review (default). patch: patch-level updates may be applied without asking. hold: no update notices.",
+          "enum": ["notify", "patch", "hold"]
+        },
+        "state": { "enum": ["linked", "overridden", "forked", "detached"] },
+        "overrides": {
+          "description": "Local changes reapplied after an update: labels, texts, metadata. Never geometry or ports — that is a fork.",
+          "type": "object",
+          "propertyNames": { "pattern": "^[A-Za-z][A-Za-z0-9_.]{0,63}$" },
+          "additionalProperties": { "type": "string", "maxLength": 1024 }
+        },
+        "derived_from": {
+          "description": "For state 'forked': <uuid>@<version> of the element forked from, which makes a later three-way merge possible.",
+          "type": "string",
+          "pattern": "^\\{?[0-9a-f-]{36}\\}?@[0-9]+\\.[0-9]+\\.[0-9]+$"
+        },
+        "detached": {
+          "description": "For state 'detached': an explicit, recorded action. The embedded copy stays and the UUID is kept, so reattaching is possible.",
+          "type": "object",
+          "required": ["at", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "at": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/dateTime" },
+            "reason": { "type": "string", "maxLength": 1024 }
+          }
+        },
+        "catalogueRevision": {
+          "description": "Revision of the translation catalogues the embedded names came from, so a later language update knows what it compares against.",
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,64}$"
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "state": { "const": "forked" } } },
+          "then": { "required": ["derived_from"] }
+        },
+        {
+          "if": { "properties": { "state": { "const": "detached" } } },
+          "then": { "required": ["detached"] }
+        }
+      ]
+    }
+  }
+}

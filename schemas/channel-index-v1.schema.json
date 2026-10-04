@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qet-protocol:schema:channel-index:1",
+  "title": "Channel index, version 1",
+  "description": "Names, for one channel, the current version and hash of every element (part D §4). This is the file a client downloads for update checks; the comparison happens locally so no parts list leaves the machine (S8). Signed by the channel key, which may only point at versions the namespace key already signed in the feed (S4): every hash listed here must appear in the signed feed with the same uuid and version. SPDX-License-Identifier: Apache-2.0.",
+  "type": "object",
+  "required": ["index", "channel", "library", "version", "updated", "expires", "snapshot", "elements"],
+  "additionalProperties": false,
+  "properties": {
+    "index": { "const": 1 },
+    "channel": {
+      "description": "'stable' (every library must publish it), 'testing', or a namespaced channel such as com.example:pilot.",
+      "anyOf": [
+        { "enum": ["stable", "testing"] },
+        { "type": "string", "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+:[a-z0-9][a-z0-9-]{0,63}$" }
+      ]
+    },
+    "library": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/libraryId" },
+    "version": {
+      "description": "Monotonically increasing integer for the index itself. A client refuses an index whose version is lower than the one it already trusts (annex §7.1, rollback).",
+      "type": "integer",
+      "minimum": 1
+    },
+    "updated": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/dateTime" },
+    "expires": {
+      "$ref": "urn:qet-protocol:schema:common:1#/$defs/dateTime",
+      "description": "Explicit expiry, days rather than months. After it, a client warns and does not treat the index as current (annex §7.1, freeze)."
+    },
+    "snapshot": {
+      "$ref": "urn:qet-protocol:schema:common:1#/$defs/hash",
+      "description": "One hash committing to the state of every entry at once (annex §7.1, mix-and-match). Defined as sha256 over the UTF-8 bytes of one line per entry, sorted by uuid, each line '<uuid> <version> <hash>\\n' — or '<uuid> <version> withdrawn\\n' for a tombstone."
+    },
+    "elements": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/current" },
+          { "$ref": "#/$defs/withdrawn" }
+        ]
+      }
+    },
+    "extensions": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/extensions" }
+  },
+  "$defs": {
+    "current": {
+      "type": "object",
+      "required": ["uuid", "version", "hash", "size"],
+      "additionalProperties": false,
+      "properties": {
+        "uuid": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/uuid" },
+        "version": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/version" },
+        "hash": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/hash" },
+        "size": {
+          "description": "Expected blob size; the client caps the transfer at it.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        }
+      }
+    },
+    "withdrawn": {
+      "description": "Tombstone. The blob is gone and the element is removed from the feed; the entry stays so that a pinned project gets an explanation rather than a missing file. withdrawal_class names the kind of notice, never its substance.",
+      "type": "object",
+      "required": ["uuid", "version", "status", "withdrawn_at", "withdrawal_class"],
+      "additionalProperties": false,
+      "properties": {
+        "uuid": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/uuid" },
+        "version": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/version" },
+        "status": { "const": "withdrawn" },
+        "withdrawn_at": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/date" },
+        "withdrawal_class": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" }
+      }
+    }
+  }
+}

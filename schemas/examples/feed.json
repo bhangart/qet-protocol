@@ -1,0 +1,49 @@
+{
+  "feed": 1,
+  "library": "qet-official",
+  "revision": "429b4bf",
+  "catalogueRevision": "a71f0c2",
+  "sourceLanguage": "fr",
+  "usage": {
+    "licence": "CC-BY-3.0",
+    "train-ai": "n",
+    "ai-use": "y",
+    "search": "y",
+    "policy": "https://qelectrotech.org/library-usage-policy"
+  },
+  "elements": [
+    {
+      "path": "10_electric/11_singlepole/contactor_3p.elmt",
+      "uuid": "{8f1c2a3b-0000-4000-8000-000000000001}",
+      "version": "2.1.0",
+      "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000001",
+      "size": 4096,
+      "names": { "en": "Contactor 3P", "de": "Schütz 3-polig", "pt-BR": "Contator 3P" },
+      "nameProvenance": { "en": "human", "de": "human" },
+      "domain": "electrical",
+      "representation": "symbol",
+      "deviceKey": "gtin:04011209000001",
+      "ports": [
+        {
+          "id": "A1", "class": "electrical", "function": "coil",
+          "spec": {
+            "voltage": { "min": 20.4, "max": 26.4, "unit": "V", "kind": "DC" },
+            "current": { "max": 0.09, "unit": "A" },
+            "dict": "IEC61360:0112/2///61360_4#AAF513"
+          }
+        }
+      ],
+      "articles": [
+        {
+          "manufacturer": "Siemens", "partNumber": "3RT2015-1BB41",
+          "gtin": ["04011209000001"], "variant": "3P, 7 A, 24 V DC",
+          "lifecycle": { "state": "nrnd", "since": "2026-03-01",
+                         "successor": { "partNumber": "3RT2015-1BB42" } }
+        }
+      ],
+      "provenance": { "source": "github.com/qelectrotech/qelectrotech-elements", "kind": "own-work" },
+      "contact": "https://library.qelectrotech.org/c/7f3a9e",
+      "extensions": {}
+    }
+  ]
+}

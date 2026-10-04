@@ -1,0 +1,15 @@
+{
+  "pins": 1,
+  "elements": [
+    {
+      "uuid": "{8f1c2a3b-0000-4000-8000-000000000001}",
+      "library": "qet-official",
+      "path": "10_electric/11_singlepole/contactor_3p.elmt",
+      "version": "2.1.0",
+      "hash": "sha256:0000000000000000000000000000000000000000000000000000000000000001",
+      "policy": "notify",
+      "state": "overridden",
+      "overrides": { "label": "K1", "meta.partNumber": "3RT2015-1BB41" }
+    }
+  ]
+}

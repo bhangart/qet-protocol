@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qet-protocol:schema:catalogue:1",
+  "title": "Translation catalogue, version 1",
+  "description": "One file per language (part D §14.2.1). Entries are keyed by (scope, id, source): the same id with a different source string is a different entry. Plural categories live here, for the translator, and never reach the feed: the generator resolves them to one finished string per language (part D §14.2.2, annex §8.1). Catalogue files are untrusted input to the generator. SPDX-License-Identifier: Apache-2.0.",
+  "type": "object",
+  "required": ["catalogue", "library", "language", "sourceLanguage", "entries"],
+  "additionalProperties": false,
+  "properties": {
+    "catalogue": { "const": 1 },
+    "library": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/libraryId" },
+    "language": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/language" },
+    "sourceLanguage": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/language" },
+    "entries": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/entry" }
+    }
+  },
+  "$defs": {
+    "entry": {
+      "type": "object",
+      "required": ["scope", "id", "source", "translation", "provenance", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "scope": {
+          "description": "element: id is the element UUID. category, rule, library: things without an element UUID that are translatable too.",
+          "enum": ["element", "category", "rule", "library"]
+        },
+        "id": { "type": "string", "minLength": 1, "maxLength": 256 },
+        "source": {
+          "description": "The source-language string this translation was made from. Part of the key.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "previousSource": {
+          "description": "The source string before an upstream rename. Lets the generator re-key the translation instead of orphaning it; a re-keyed entry is 'needs-review' (part D §5).",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "translation": {
+          "oneOf": [
+            { "type": "string", "minLength": 1, "maxLength": 1024 },
+            { "$ref": "#/$defs/plural" }
+          ]
+        },
+        "provenance": { "enum": ["human", "machine"] },
+        "status": { "enum": ["approved", "needs-review"] }
+      }
+    },
+    "plural": {
+      "description": "A translation whose form depends on a count fixed by the element (a three-pole contactor has three poles in every language). The generator selects the CLDR plural category of 'count' for this catalogue's language and substitutes '#' with the count. 'other' is always required.",
+      "type": "object",
+      "required": ["count", "forms"],
+      "additionalProperties": false,
+      "properties": {
+        "count": { "type": "integer", "minimum": 0, "maximum": 1000000 },
+        "forms": {
+          "type": "object",
+          "required": ["other"],
+          "additionalProperties": false,
+          "properties": {
+            "zero": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "one": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "two": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "few": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "many": { "type": "string", "minLength": 1, "maxLength": 1024 },
+            "other": { "type": "string", "minLength": 1, "maxLength": 1024 }
+          }
+        }
+      }
+    }
+  }
+}

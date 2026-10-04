@@ -1,0 +1,112 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qet-protocol:schema:common:1",
+  "title": "Shared definitions",
+  "description": "Definitions used by more than one protocol document. SPDX-License-Identifier: Apache-2.0. Identifiers are URNs on purpose: nothing in a schema is ever fetched (S1).",
+  "$defs": {
+    "libraryId": {
+      "description": "Namespace identifier of a library. Lower case; reverse-DNS form (org.example.lib) for verified namespaces, a short name (qet-official) for the project's own. Resolution is namespace-authoritative (S5): no source answers for a namespace it does not own.",
+      "type": "string",
+      "pattern": "^[a-z0-9]([a-z0-9.-]{0,126}[a-z0-9])?$"
+    },
+    "uuid": {
+      "description": "Element UUID as written in the .elmt file: lower-case hex, with or without braces. Stable across renames and moves.",
+      "type": "string",
+      "pattern": "^\\{?[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\}?$"
+    },
+    "version": {
+      "description": "Element version, major.minor.patch, assigned by the publisher. Anything touching a port is major (part D §5).",
+      "type": "string",
+      "pattern": "^(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})\\.(0|[1-9][0-9]{0,8})$"
+    },
+    "hash": {
+      "description": "Content hash: 'sha256:' followed by 64 lower-case hex digits.",
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "language": {
+      "description": "BCP 47 language tag (pt-BR, not pt_BR).",
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "dateTime": {
+      "description": "UTC timestamp, second precision, 'Z' suffix.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"
+    },
+    "relayUri": {
+      "description": "Opaque relay endpoint at the publishing host, which forwards to the contributor it has verified (part D §3.5). Never an e-mail address or any other direct address of a person; hence https only. A persistent pseudonymous identifier for a publisher, never for a reader (S8).",
+      "type": "string",
+      "pattern": "^https://[^\\s@]+$",
+      "maxLength": 512
+    },
+    "aiTerm": {
+      "type": "string",
+      "enum": ["y", "n"]
+    },
+    "usage": {
+      "description": "Usage declaration (part D §4, §18.3). Mandatory at library level, inside the signed feed; optional per element, where it overrides the library's. There is deliberately no default anywhere: a feed without a library-level block is rejected, never defaulted (annex §10.1.1).",
+      "type": "object",
+      "required": ["licence", "train-ai", "ai-use", "search"],
+      "additionalProperties": false,
+      "properties": {
+        "licence": {
+          "description": "SPDX licence expression.",
+          "type": "string",
+          "pattern": "^[A-Za-z0-9.+() -]{1,128}$"
+        },
+        "train-ai": { "$ref": "#/$defs/aiTerm", "description": "IETF AIPREF: may the content be used to train AI models." },
+        "ai-use": { "$ref": "#/$defs/aiTerm", "description": "IETF AIPREF: may the content be used as input to AI systems at use time." },
+        "search": { "$ref": "#/$defs/aiTerm", "description": "IETF AIPREF: may the content be used to build a search index." },
+        "policy": {
+          "description": "Human-readable policy page. Displayed as text and never dereferenced by a client (S1).",
+          "type": "string",
+          "pattern": "^https://[^\\s]+$",
+          "maxLength": 512
+        }
+      }
+    },
+    "representation": {
+      "description": "Which kind of view an element is (part D §13.3). An OPEN vocabulary: a registered core, plus namespaced extensions of the form <reverse-dns>:<name>. A schema that closed this set would make the vocabulary closed in practice, so unregistered namespaced values must validate.",
+      "anyOf": [
+        { "enum": ["symbol", "scheme", "geometry-2d", "terminal-view"] },
+        { "type": "string", "pattern": "^[a-z0-9-]+(\\.[a-z0-9-]+)+:[a-z0-9][a-z0-9-]{0,63}$" }
+      ]
+    },
+    "articleId": {
+      "description": "Identifies an article (a physical product), never an element. At least one of the identifiers must be present.",
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "manufacturer": { "type": "string", "maxLength": 256 },
+        "partNumber": { "type": "string", "maxLength": 128 },
+        "gtin": { "type": "string", "pattern": "^[0-9]{8,14}$" }
+      }
+    },
+    "lifecycle": {
+      "description": "Coarse ARTICLE lifecycle (part D §5, 'Two lifecycles'). Sourced from the library's metadata file, never from the .elmt, so that a discontinuation cannot change a drawing's hash. Authoritative only from the manufacturer's own namespace. Absent means unknown, never active.",
+      "type": "object",
+      "required": ["state", "since"],
+      "additionalProperties": false,
+      "properties": {
+        "state": { "enum": ["announced", "active", "nrnd", "discontinued", "end-of-support"] },
+        "since": { "$ref": "#/$defs/date" },
+        "lastOrder": { "$ref": "#/$defs/date" },
+        "successor": {
+          "$ref": "#/$defs/articleId",
+          "description": "Successor ARTICLE, not an element UUID. Not a drop-in replacement."
+        }
+      }
+    },
+    "extensions": {
+      "description": "Namespaced extensions, keyed by a domain name (x-example.org or example.org). Clients must ignore unknown extensions; the core never depends on them.",
+      "type": "object",
+      "propertyNames": { "pattern": "^(x-)?[a-z0-9-]+(\\.[a-z0-9-]+)+$" }
+    }
+  }
+}
