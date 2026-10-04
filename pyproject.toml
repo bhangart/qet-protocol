@@ -10,10 +10,11 @@ description = "Feed generator, signing and verification for shared QElectroTech 
 readme = "README.md"
 license = "Apache-2.0"
 requires-python = ">=3.11"
-dependencies = ["babel>=2.12"]
+dependencies = ["babel>=2.12", "cryptography>=42"]
 
 [project.scripts]
 qet-feedgen = "qet_protocol.feedgen:main"
+qet-feed = "qet_protocol.feedtool:main"
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6", "jsonschema>=4.18"]

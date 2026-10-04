@@ -32,6 +32,24 @@ two that shape the code most:
 - **S2 — No `<!DOCTYPE`, no entity declarations**, rejected by a byte-level
   check before any parser runs.
 
+## Building and verifying a feed
+
+```sh
+# from a committed checkout of qelectrotech-elements
+qet-feedgen ../qelectrotech-elements --config examples/qet-official.library.json --out out/
+
+# TEST keys only — real namespace keys are offline (security annex §11.1)
+qet-feed keygen --role namespace --dir keys/
+qet-feed keygen --role channel   --dir keys/
+qet-feed sign out/ --namespace-key keys/namespace.key --channel-key keys/channel.key
+
+qet-feed verify out/ --namespace-pub keys/namespace.pub --channel-pub keys/channel.pub
+```
+
+`out/` then holds `feed.json` (signed by the namespace key), `index/stable.json`
+(signed by the channel key) and `blob/<sha256>` per element. Generation is
+deterministic: the same commit and keys give byte-identical output.
+
 ## Development
 
 ```sh
