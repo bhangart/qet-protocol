@@ -1,0 +1,18 @@
+{
+  "catalogue": 1,
+  "library": "qet-official",
+  "language": "pl",
+  "sourceLanguage": "en",
+  "entries": [
+    { "scope": "element", "id": "{8f1c2a3b-0000-4000-8000-000000000001}",
+      "source": "Contactor 3P", "translation": "Stycznik 3-biegunowy",
+      "provenance": "human", "status": "approved" },
+    { "scope": "element", "id": "{8f1c2a3b-0000-4000-8000-000000000003}",
+      "source": "Terminal block, 2 terminals", "previousSource": "Terminal block 2 terminals",
+      "translation": { "count": 2, "forms": { "one": "Listwa, # zacisk", "few": "Listwa, # zaciski",
+                                              "many": "Listwa, # zacisków", "other": "Listwa, # zacisku" } },
+      "provenance": "human", "status": "needs-review" },
+    { "scope": "category", "id": "10_electric", "source": "Electric",
+      "translation": "Elektryczne", "provenance": "machine", "status": "approved" }
+  ]
+}

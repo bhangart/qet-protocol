@@ -1,0 +1,194 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:qet-protocol:schema:feed:1",
+  "title": "Library feed, version 1",
+  "description": "The signed list of every element a library publishes (part D §4). Signed by the namespace key: this is the statement of which element versions legitimately exist, and a channel index may only select among them (S4). The core is closed (additionalProperties: false) so that no field can be added that carries a client identifier (S8) or names a resource for a client to fetch (S1); growth goes through 'extensions'. SPDX-License-Identifier: Apache-2.0.",
+  "type": "object",
+  "required": ["feed", "library", "revision", "catalogueRevision", "sourceLanguage", "usage", "elements"],
+  "additionalProperties": false,
+  "properties": {
+    "feed": { "const": 1 },
+    "library": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/libraryId" },
+    "revision": {
+      "description": "Commit of the element repository the feed was generated from. Together with catalogueRevision this makes the feed reproducible.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,64}$"
+    },
+    "catalogueRevision": {
+      "description": "Commit of the translation catalogues, or null when the names come from the .elmt files alone.",
+      "oneOf": [
+        { "type": "string", "pattern": "^[0-9a-f]{7,64}$" },
+        { "type": "null" }
+      ]
+    },
+    "sourceLanguage": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/language" },
+    "usage": {
+      "$ref": "urn:qet-protocol:schema:common:1#/$defs/usage",
+      "description": "Library-level usage declaration. REQUIRED, no default (annex §10.1.1)."
+    },
+    "contact": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/relayUri" },
+    "contact_unreachable": {
+      "description": "Set by the host when delivery to the contributor's relay fails permanently. Removes nothing and changes no ranking.",
+      "type": "boolean"
+    },
+    "elements": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/element" }
+    },
+    "extensions": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/extensions" }
+  },
+  "$defs": {
+    "element": {
+      "type": "object",
+      "required": ["path", "uuid", "version", "hash", "size", "names"],
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "description": "Relative POSIX path inside the library, NFC-normalised, ending in .elmt. No leading slash, no '.' or '..' segment, no backslash. It identifies the element within the library; the blob is fetched by hash, never by path.",
+          "type": "string",
+          "maxLength": 1024,
+          "pattern": "^(?!/)(?!.*(^|/)\\.{1,2}(/|$))[^\\\\\\x00-\\x1f]+\\.elmt$"
+        },
+        "uuid": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/uuid" },
+        "version": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/version" },
+        "hash": {
+          "$ref": "urn:qet-protocol:schema:common:1#/$defs/hash",
+          "description": "sha256 of the element file; the blob is served at blob/<hex>."
+        },
+        "size": {
+          "description": "Exact byte size of the blob. A client stops a transfer beyond it (annex §7.1, endless data).",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2097152
+        },
+        "names": {
+          "description": "Finished display names, one string per language. Plural categories and message formats are already evaluated by the generator; a client never evaluates a message format (annex §8.1).",
+          "type": "object",
+          "minProperties": 1,
+          "propertyNames": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/language" },
+          "additionalProperties": { "type": "string", "minLength": 1, "maxLength": 1024 }
+        },
+        "nameProvenance": {
+          "description": "Human or machine translation, per language. A language absent here has unknown provenance.",
+          "type": "object",
+          "propertyNames": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/language" },
+          "additionalProperties": { "enum": ["human", "machine"] }
+        },
+        "domain": {
+          "description": "Engineering domain the element belongs to.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9-]{0,31}$"
+        },
+        "representation": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/representation" },
+        "deviceKey": {
+          "description": "Groups the elements that are views of the same physical device (part D §13.3). Views sharing a deviceKey carry the same port identifiers and classes.",
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9.-]*:[^\\s]{1,200}$"
+        },
+        "symbolStandard": {
+          "description": "Convention applied within a kind of view (part D §14.3), e.g. iec-60617.",
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+        },
+        "ports": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/port" }
+        },
+        "articles": {
+          "description": "Flat list of the articles this drawing can represent. Deliberately no product attribute model (part D §5).",
+          "type": "array",
+          "items": { "$ref": "#/$defs/article" }
+        },
+        "usage": {
+          "$ref": "urn:qet-protocol:schema:common:1#/$defs/usage",
+          "description": "Optional per-element override. An element without one inherits the library's; that is the normal case."
+        },
+        "provenance": { "$ref": "#/$defs/provenance" },
+        "contact": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/relayUri" },
+        "deprecated": {
+          "description": "ELEMENT lifecycle: the drawing is wrong or replaced. Says nothing about the product.",
+          "type": "boolean"
+        },
+        "superseded_by": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/uuid" },
+        "extensions": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/extensions" }
+      }
+    },
+    "port": {
+      "type": "object",
+      "required": ["id", "class"],
+      "additionalProperties": false,
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "class": { "enum": ["electrical", "signal", "hydraulic", "gas", "refrigerant", "air", "data"] },
+        "function": { "type": "string", "pattern": "^[a-z][a-z0-9-]{0,31}$" },
+        "spec": {
+          "description": "Connection properties (part D §4): what the port accepts, not catalogue data. Every value carries a unit.",
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "voltage": { "$ref": "#/$defs/quantity" },
+            "current": { "$ref": "#/$defs/quantity" },
+            "pressure": { "$ref": "#/$defs/quantity" },
+            "nominalDiameter": { "$ref": "#/$defs/quantity" },
+            "medium": { "type": "string", "maxLength": 64 },
+            "signal": { "type": "string", "maxLength": 64 },
+            "dict": {
+              "description": "Reference to a property dictionary (ETIM, IEC 61360 / ECLASS, VDI 3805). A reference, never a copy; never dereferenced by a client.",
+              "type": "string",
+              "maxLength": 256
+            }
+          }
+        }
+      }
+    },
+    "quantity": {
+      "type": "object",
+      "required": ["unit"],
+      "additionalProperties": false,
+      "minProperties": 2,
+      "properties": {
+        "min": { "type": "number" },
+        "max": { "type": "number" },
+        "nominal": { "type": "number" },
+        "unit": { "type": "string", "pattern": "^[A-Za-z%°µΩ/·0-9]{1,16}$" },
+        "kind": { "enum": ["AC", "DC", "AC/DC"] }
+      }
+    },
+    "article": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "manufacturer": { "type": "string", "maxLength": 256 },
+        "partNumber": { "type": "string", "maxLength": 128 },
+        "gtin": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[0-9]{8,14}$" }
+        },
+        "variant": {
+          "description": "Free-text label for humans, e.g. 'C16, 1P, 6 kA'.",
+          "type": "string",
+          "maxLength": 256
+        },
+        "lifecycle": { "$ref": "urn:qet-protocol:schema:common:1#/$defs/lifecycle" }
+      }
+    },
+    "provenance": {
+      "description": "How the element came to exist. A declaration by the publisher, never a verification by the host.",
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": { "enum": ["own-work", "converted", "derived"] },
+        "source": { "type": "string", "maxLength": 512 },
+        "derived_from": {
+          "description": "<uuid>@<version> of the element this one was forked from.",
+          "type": "string",
+          "pattern": "^\\{?[0-9a-f-]{36}\\}?@[0-9]+\\.[0-9]+\\.[0-9]+$"
+        }
+      },
+      "if": { "properties": { "kind": { "const": "derived" } } },
+      "then": { "required": ["kind", "derived_from"] }
+    }
+  }
+}
